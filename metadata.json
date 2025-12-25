@@ -1,7 +1,5 @@
 {
   "name": "RT Digital Pro",
   "description": "A professional neighborhood management system for RT/RW with AI-powered news editing, resident management, and photo galleries.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "requestFramePermissions": []
 }

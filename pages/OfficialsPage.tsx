@@ -3,28 +3,30 @@ import React, { useState, useEffect } from 'react';
 import { Official, UserRole } from '../types';
 import { storage, STORAGE_KEYS } from '../services/storageService';
 import OfficialEditor from '../components/OfficialEditor';
+import { db } from '../services/firebase.ts';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface OfficialsPageProps {
   role: UserRole;
 }
 
-const INITIAL_OFFICIALS: Official[] = [];
-
 const OfficialsPage: React.FC<OfficialsPageProps> = ({ role }) => {
-  const [officials, setOfficials] = useState<Official[]>(() => 
-    storage.get(STORAGE_KEYS.OFFICIALS, INITIAL_OFFICIALS)
-  );
+  const [officials, setOfficials] = useState<Official[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedOfficial, setSelectedOfficial] = useState<Official | undefined>(undefined);
 
   useEffect(() => {
-    storage.set(STORAGE_KEYS.OFFICIALS, officials);
-  }, [officials]);
+    const unsub = onSnapshot(doc(db, "app_data", STORAGE_KEYS.OFFICIALS), (docSnap) => {
+      if (docSnap.exists()) setOfficials(docSnap.data().data || []);
+    });
+    return () => unsub();
+  }, []);
 
-  const handleSave = (data: Partial<Official>) => {
+  const handleSave = async (data: Partial<Official>) => {
     if (role !== 'ADMIN') return;
+    let updated: Official[];
     if (selectedOfficial) {
-      setOfficials(officials.map(o => o.id === selectedOfficial.id ? { ...o, ...data as Official } : o));
+      updated = officials.map(o => o.id === selectedOfficial.id ? { ...o, ...data as Official } : o);
     } else {
       const newEntry: Official = {
         id: Date.now().toString(),
@@ -35,16 +37,18 @@ const OfficialsPage: React.FC<OfficialsPageProps> = ({ role }) => {
         imageUrl: '',
         ...data as Official
       };
-      setOfficials([...officials, newEntry]);
+      updated = [...officials, newEntry];
     }
+    await storage.set(STORAGE_KEYS.OFFICIALS, updated);
     setIsEditing(false);
     setSelectedOfficial(undefined);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (role !== 'ADMIN') return;
-    if (window.confirm('Hapus data pengurus ini secara permanen?')) {
-      setOfficials(officials.filter(o => o.id !== id));
+    if (window.confirm('Hapus data pengurus ini secara permanen dari Cloud?')) {
+      const updated = officials.filter(o => o.id !== id);
+      await storage.set(STORAGE_KEYS.OFFICIALS, updated);
     }
   };
 
@@ -79,7 +83,7 @@ const OfficialsPage: React.FC<OfficialsPageProps> = ({ role }) => {
 
       {officials.length === 0 ? (
         <div className="py-20 text-center bg-slate-50 rounded-[44px] border border-dashed border-slate-200">
-           <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Belum ada data pengurus diatur</p>
+           <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Memuat data pengurus...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 pb-12">
@@ -104,10 +108,10 @@ const OfficialsPage: React.FC<OfficialsPageProps> = ({ role }) => {
                     {role === 'ADMIN' && (
                       <div className="flex gap-2">
                         <button onClick={() => { setSelectedOfficial(official); setIsEditing(true); }} className="p-2 bg-slate-50 text-slate-400 hover:text-[#0077b6] rounded-xl transition-all">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                         </button>
                         <button onClick={() => handleDelete(official.id)} className="p-2 bg-slate-50 text-slate-400 hover:text-rose-500 rounded-xl transition-all">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         </button>
                       </div>
                     )}

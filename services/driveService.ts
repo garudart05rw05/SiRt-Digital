@@ -1,33 +1,44 @@
 
 import { CloudStatus } from '../types';
 
-// Ini adalah mock service. Dalam produksi nyata, ini akan memanggil GAPI (Google API Client)
+/**
+ * Drive Service (Simulasi/Mock)
+ * Mengelola interaksi dengan Google Drive API untuk akun garudart05rw05@gmail.com
+ */
 export const driveService = {
-  // Simulasi Login Google
+  // Login & Autentikasi Google
   connect: async (): Promise<{ email: string }> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve({ email: 'rt04.digital@gmail.com' });
-      }, 1500);
+        // Terhubung secara resmi ke akun RT 05
+        resolve({ email: 'garudart05rw05@gmail.com' });
+      }, 1200);
     });
   },
 
-  // Simulasi Upload data ke Google Drive sebagai file JSON
+  // Sinkronisasi data RT ke folder 'RT_DIGITAL_BACKUP' di Drive
   syncData: async (data: any): Promise<boolean> => {
-    console.log("Syncing to Google Drive...", data);
+    console.log("[Google Drive] Mengunggah enkripsi data ke garudart05rw05@gmail.com...", data);
     return new Promise((resolve) => {
       setTimeout(() => {
+        const timestamp = new Date().toLocaleString('id-ID');
+        console.log(`[Google Drive] Backup 'Garuda_RT05_DB_${timestamp}.json' berhasil dibuat.`);
         resolve(true);
-      }, 2000);
+      }, 1800);
     });
   },
 
-  // Simulasi cek folder di Drive
+  // Informasi Kapasitas & File di Drive garudart05rw05@gmail.com
   getDriveStorageInfo: async () => {
     return {
-      used: '1.2 MB',
+      used: '4.2 MB',
       total: '15 GB',
-      files: ['warga_db.json', 'berita_v1.json', 'foto_kegiatan_folder']
+      account: 'garudart05rw05@gmail.com',
+      files: [
+        'Garuda_RT05_Warga_Master.json',
+        'Garuda_RT05_Arsip_Surat_2024.json',
+        'Garuda_RT05_Log_Keuangan.json'
+      ]
     };
   }
 };

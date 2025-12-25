@@ -1,6 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Page, UserRole } from '../types';
+import { Page, UserRole, AppSettings } from '../types';
+import { storage, STORAGE_KEYS } from '../services/storageService.ts';
+import { db } from '../services/firebase.ts';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,16 +15,83 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children, activePage, onPageChange, role, onLogout }) => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [notifs, setNotifs] = useState<Record<string, boolean>>({});
+  const [settings, setSettings] = useState<AppSettings>(() => storage.get<AppSettings>(STORAGE_KEYS.SETTINGS, {}));
 
   useEffect(() => {
     const handleStatus = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', handleStatus);
     window.addEventListener('offline', handleStatus);
+    
+    // Sinkronkan settings untuk running text
+    const unsubSettings = onSnapshot(doc(db, "app_data", STORAGE_KEYS.SETTINGS), (docSnap) => {
+      if (docSnap.exists()) {
+        setSettings(docSnap.data().data);
+      }
+    });
+
     return () => {
       window.removeEventListener('online', handleStatus);
       window.removeEventListener('offline', handleStatus);
+      unsubSettings();
     };
   }, []);
+
+  const getStorageKeyForPage = (page: Page | string): string | null => {
+    const map: Record<string, string> = {
+      [Page.FINANCE]: STORAGE_KEYS.FINANCE,
+      [Page.NEWS]: STORAGE_KEYS.NEWS,
+      [Page.GALLERY]: STORAGE_KEYS.GALLERY,
+      [Page.RESIDENTS]: STORAGE_KEYS.RESIDENTS,
+      [Page.COMPLAINTS]: STORAGE_KEYS.COMPLAINTS,
+      [Page.GUESTBOOK]: STORAGE_KEYS.GUESTBOOK,
+      [Page.LETTERS]: STORAGE_KEYS.LETTERS,
+      [Page.JIMPITAN]: STORAGE_KEYS.JIMPITAN_LOGS,
+      [Page.SOLIDARITAS]: STORAGE_KEYS.SOLIDARITAS_LOGS,
+      [Page.INVENTORY]: STORAGE_KEYS.INVENTORY,
+      [Page.MINUTES]: STORAGE_KEYS.MINUTES,
+    };
+    return map[page] || null;
+  };
+
+  const checkNotifs = () => {
+    const pagesToTrack = [
+      Page.FINANCE, Page.NEWS, Page.GALLERY, Page.RESIDENTS, 
+      Page.COMPLAINTS, Page.GUESTBOOK, Page.LETTERS, 
+      Page.JIMPITAN, Page.SOLIDARITAS, Page.INVENTORY, Page.MINUTES
+    ];
+    
+    const newNotifs: Record<string, boolean> = {};
+    pagesToTrack.forEach(page => {
+      const storageKey = getStorageKeyForPage(page);
+      if (storageKey) {
+        const data = storage.get<any[]>(storageKey, []);
+        const currentCount = (data || []).length;
+        const lastCount = Number(localStorage.getItem(`last_count_${storageKey}`) || 0);
+        newNotifs[page] = currentCount > lastCount;
+      }
+    });
+    setNotifs(newNotifs);
+  };
+
+  useEffect(() => {
+    checkNotifs();
+    window.addEventListener('storage_updated', checkNotifs);
+    return () => window.removeEventListener('storage_updated', checkNotifs);
+  }, []);
+
+  useEffect(() => {
+    const storageKey = getStorageKeyForPage(activePage);
+    if (storageKey) {
+      const data = storage.get<any[]>(storageKey, []);
+      localStorage.setItem(`last_count_${storageKey}`, (data || []).length.toString());
+      checkNotifs();
+    }
+  }, [activePage]);
+
+  const handleNavClick = (page: Page) => {
+    onPageChange(page);
+  };
 
   const navItems = [
     { id: Page.DASHBOARD, label: 'Beranda', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -33,48 +103,79 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onPageChange, rol
       : { id: Page.STATISTICS, label: 'Data', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' }
   ];
 
+  const hasTabNotif = (pageId: Page) => {
+    if (pageId === Page.ADMIN_PANEL) {
+      return [Page.RESIDENTS, Page.COMPLAINTS, Page.GUESTBOOK, Page.LETTERS, Page.JIMPITAN, Page.SOLIDARITAS, Page.INVENTORY, Page.MINUTES]
+        .some(p => notifs[p]);
+    }
+    return notifs[pageId];
+  };
+
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] max-w-2xl mx-auto border-x border-slate-100 shadow-2xl overflow-hidden relative">
-      <header className="px-5 py-4 flex items-center justify-between bg-white z-20 sticky top-0 border-b border-slate-50 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div 
-            onClick={() => onPageChange(Page.DASHBOARD)}
-            className="w-10 h-10 bg-[#0077b6] rounded-xl flex items-center justify-center text-white font-black text-xs cursor-pointer active:scale-95 transition-transform shadow-lg shadow-blue-500/20"
+      <header className="bg-white/80 backdrop-blur-xl border-b border-slate-100 flex flex-col z-[100] no-print">
+        <div className="px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-[#0077b6] rounded-xl flex items-center justify-center text-white shadow-lg">
+              <span className="text-[10px] font-black tracking-tighter">SiRT</span>
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-[11px] font-black text-slate-800 uppercase tracking-widest leading-none">Digital Pro</h1>
+              <div className="flex items-center gap-1.5 mt-1">
+                <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
+                <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+                  {role} • {isOnline ? 'Online' : 'Offline Mode'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={onLogout}
+            className="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-2xl transition-all active:scale-95 group"
           >
-            SiRT
-          </div>
-          {/* Minimalist Status Indicator */}
-          <div className="flex items-center justify-center bg-slate-50 w-8 h-8 rounded-full border border-slate-100">
-            <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)] animate-pulse' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]'}`}></div>
-          </div>
+            <span className="text-[9px] font-black uppercase tracking-widest">Logout</span>
+            <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div 
-            onClick={onLogout}
-            className={`w-10 h-10 rounded-full flex flex-col items-center justify-center text-white font-black text-[10px] transition-all cursor-pointer active:scale-90 shadow-lg ${role === 'ADMIN' ? 'bg-red-600 shadow-red-500/30' : 'bg-[#0077b6] shadow-blue-500/30'}`}
-          >
-            <span className="leading-none">{role === 'ADMIN' ? 'ADM' : 'WRG'}</span>
-            <span className="text-[6px] opacity-60">EXIT</span>
+        {/* RUNNING TEXT (MARQUEE) */}
+        {settings.marqueeEnabled && settings.marqueeText && (
+          <div className="bg-indigo-50 border-t border-indigo-100 py-2.5 px-4 flex items-center gap-3 overflow-hidden">
+             <div className="shrink-0 bg-indigo-600 text-white p-1 rounded-md shadow-sm z-10">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             </div>
+             <div className="marquee-container flex-1">
+                <div className="marquee-content text-[10px] font-black uppercase tracking-widest text-indigo-700">
+                   {settings.marqueeText} • {settings.marqueeText} • {settings.marqueeText}
+                </div>
+             </div>
           </div>
-        </div>
+        )}
       </header>
 
       <main className="flex-1 overflow-y-auto page-enter pb-32 no-scrollbar">
         {children}
       </main>
 
-      <nav className="fixed bottom-0 w-full max-w-2xl bg-white/80 backdrop-blur-xl border-t border-slate-100 flex justify-around py-4 px-2 z-[90] shadow-[0_-10px_25px_rgba(0,0,0,0.05)]">
+      <nav className="fixed bottom-0 w-full max-w-2xl bg-white/80 backdrop-blur-xl border-t border-slate-100 flex justify-around py-4 px-2 z-[90] shadow-[0_-10px_25px_rgba(0,0,0,0.05)] no-print">
         {navItems.map((item: any) => {
           const isActive = activePage === item.id;
+          const showDot = hasTabNotif(item.id);
+          
           return (
             <button
               key={item.id}
-              onClick={() => onPageChange(item.id)}
-              className={`flex flex-col items-center gap-1.5 transition-all flex-1 ${
+              onClick={() => handleNavClick(item.id)}
+              className={`flex flex-col items-center gap-1.5 transition-all flex-1 relative ${
                 isActive ? 'text-[#0077b6]' : 'text-slate-300'
               }`}
             >
+              {showDot && !isActive && (
+                <div className="absolute top-2 right-[30%] w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white shadow-sm z-30 animate-pulse"></div>
+              )}
               <div className={`p-2 rounded-2xl transition-all ${isActive ? 'bg-blue-50 scale-110 shadow-inner' : 'hover:bg-slate-50'}`}>
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={isActive ? 3 : 2} d={item.icon} />

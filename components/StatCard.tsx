@@ -17,7 +17,7 @@ const StatCard: React.FC<StatData> = ({ label, value, icon, trend, trendValue })
       </div>
       <div>
         <h3 className="text-slate-500 text-sm font-medium">{label}</h3>
-        <p className="text-3xl font-bold text-slate-800">{value.toLocaleString()}</p>
+        <p className="text-3xl font-bold text-slate-800">{(value ?? 0).toLocaleString()}</p>
       </div>
     </div>
   );

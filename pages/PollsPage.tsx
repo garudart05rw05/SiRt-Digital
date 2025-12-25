@@ -2,42 +2,35 @@
 import React, { useState, useEffect } from 'react';
 import { Poll, UserRole } from '../types.ts';
 import { storage, STORAGE_KEYS } from '../services/storageService.ts';
-
-const MOCK_POLLS: Poll[] = [
-  { 
-    id: 'P1', 
-    question: 'Warna cat Gapura RT untuk HUT RI nanti?', 
-    options: [
-      { id: 'O1', text: 'Merah Putih Klasik', votes: 12 },
-      { id: 'O2', text: 'Modern Minimalis (Abu/Putih)', votes: 8 },
-      { id: 'O3', text: 'Kreatif (Mural)', votes: 5 }
-    ],
-    totalVotes: 25,
-    status: 'Active',
-    createdAt: '2024-05-20T00:00:00Z'
-  }
-];
+import { db } from '../services/firebase.ts';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 const PollsPage: React.FC<{ role: UserRole }> = ({ role }) => {
-  const [polls, setPolls] = useState<Poll[]>(() => storage.get(STORAGE_KEYS.POLLS, MOCK_POLLS));
+  const [polls, setPolls] = useState<Poll[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
 
-  useEffect(() => { storage.set(STORAGE_KEYS.POLLS, polls); }, [polls]);
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, "app_data", STORAGE_KEYS.POLLS), (docSnap) => {
+      if (docSnap.exists()) setPolls(docSnap.data().data || []);
+    });
+    return () => unsub();
+  }, []);
 
-  const handleVote = (pollId: string, optionId: string) => {
-    setPolls(polls.map(p => {
+  const handleVote = async (pollId: string, optionId: string) => {
+    const updated = polls.map(p => {
       if (p.id !== pollId) return p;
       return {
         ...p,
         totalVotes: p.totalVotes + 1,
         options: p.options.map(o => o.id === optionId ? { ...o, votes: o.votes + 1 } : o)
       };
-    }));
-    alert("Terima kasih atas partisipasi Anda!");
+    });
+    const saved = await storage.set(STORAGE_KEYS.POLLS, updated);
+    if (saved) alert("Terima kasih atas partisipasi Anda!");
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (role !== 'ADMIN') return;
     if (!newPoll.question || newPoll.options.some(o => !o)) return;
     const poll: Poll = {
@@ -48,15 +41,19 @@ const PollsPage: React.FC<{ role: UserRole }> = ({ role }) => {
       totalVotes: 0,
       options: newPoll.options.map((text, i) => ({ id: `O${i}`, text, votes: 0 }))
     };
-    setPolls([poll, ...polls]);
-    setShowCreate(false);
-    setNewPoll({ question: '', options: ['', ''] });
+    const updated = [poll, ...polls];
+    const saved = await storage.set(STORAGE_KEYS.POLLS, updated);
+    if (saved) {
+      setShowCreate(false);
+      setNewPoll({ question: '', options: ['', ''] });
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (role !== 'ADMIN') return;
-    if (window.confirm('Hapus polling ini secara permanen?')) {
-      setPolls(polls.filter(p => p.id !== id));
+    if (window.confirm('Hapus polling ini secara permanen dari Cloud?')) {
+      const updated = polls.filter(p => p.id !== id);
+      await storage.set(STORAGE_KEYS.POLLS, updated);
     }
   };
 

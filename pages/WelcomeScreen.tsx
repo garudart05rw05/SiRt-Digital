@@ -106,9 +106,9 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStart }) => {
           Masuk ke Aplikasi
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
         </button>
-        <div className="mt-8 flex flex-col items-center gap-2">
-           <img src={kediriLogo} alt="Logo Kediri" className="w-8 h-8 opacity-40" />
+        <div className="mt-8 flex flex-col items-center gap-2 text-center">
            <p className="text-[9px] text-gray-300 font-bold uppercase tracking-[0.3em]">Harmoni Kota Kediri</p>
+           <p className="text-[8px] text-gray-400 font-medium uppercase tracking-widest opacity-60">© 2026 Pengurus RT 05 RW 05 Gayam - Mojoroto</p>
         </div>
       </div>
     </div>

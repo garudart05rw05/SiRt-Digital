@@ -16,6 +16,10 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -44,9 +48,60 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        .marquee-container {
+            overflow: hidden;
+            white-space: nowrap;
+            width: 100%;
+        }
+        .marquee-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 25s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
+
         @media (max-width: 640px) {
             .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
         }
+
+        @media print {
+            .no-print, nav, button, input, select, .fixed {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            main {
+                padding-bottom: 0 !important;
+            }
+            .animate-page-enter {
+                animation: none !important;
+            }
+            .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
+                shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            .bg-slate-900, .bg-indigo-700, .bg-blue-800, .bg-emerald-600 {
+                background-color: #f1f5f9 !important;
+                color: black !important;
+            }
+            .text-white {
+                color: black !important;
+            }
+            .print-header {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 3px double #333;
+                padding-bottom: 10px;
+            }
+        }
+        .print-header { display: none; }
     </style>
 <script type="importmap">
 {
@@ -67,7 +122,6 @@
 <body>
     <div id="root"></div>
     <script>
-      // Simple Service Worker Registration for PWA Support
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGV2ZW50ID0+IHsgZXZlbnQucmVzcG9uZFdpdGgoZmV0Y2goZXZlbnQucmVxdWVzdCkpOyB9KTs=')

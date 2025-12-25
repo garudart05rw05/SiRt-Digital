@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Official } from '../types';
+import { compressImage } from '../services/storageService';
 
 interface OfficialEditorProps {
   onSave: (official: Partial<Official>) => void;
@@ -14,14 +15,18 @@ const OfficialEditor: React.FC<OfficialEditorProps> = ({ onSave, onCancel, initi
   const [phone, setPhone] = useState(initialData?.phone || '');
   const [duties, setDuties] = useState(initialData?.duties || '');
   const [imageUrl, setImageUrl] = useState(initialData?.imageUrl || '');
+  const [isCompressing, setIsCompressing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setIsCompressing(true);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageUrl(reader.result as string);
+      reader.onloadend = async () => {
+        const optimized = await compressImage(reader.result as string, 400, 0.7); // Smaller for profile
+        setImageUrl(optimized);
+        setIsCompressing(false);
       };
       reader.readAsDataURL(file);
     }
@@ -41,10 +46,12 @@ const OfficialEditor: React.FC<OfficialEditorProps> = ({ onSave, onCancel, initi
       <div className="p-10 space-y-8">
         <div className="flex flex-col items-center gap-4">
           <div 
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => !isCompressing && fileInputRef.current?.click()}
             className="w-36 h-36 rounded-[36px] border-4 border-dashed border-slate-200 flex items-center justify-center bg-slate-900 cursor-pointer hover:bg-slate-800 transition-all overflow-hidden relative group shadow-xl"
           >
-            {imageUrl ? (
+            {isCompressing ? (
+               <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            ) : imageUrl ? (
               <>
                 <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
@@ -116,7 +123,7 @@ const OfficialEditor: React.FC<OfficialEditorProps> = ({ onSave, onCancel, initi
           </button>
           <button 
             onClick={() => onSave({ name, position, phone, duties, imageUrl })}
-            disabled={!name || !position}
+            disabled={!name || !position || isCompressing}
             className="flex-[2] px-8 py-5 rounded-[24px] bg-[#0077b6] text-white font-black text-xs uppercase tracking-widest hover:bg-[#005f91] shadow-2xl shadow-blue-500/30 disabled:opacity-50 transition-all"
           >
             Simpan Data Pengurus

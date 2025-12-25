@@ -17,7 +17,7 @@ const EmergencyEditor: React.FC<EmergencyEditorProps> = ({ onSave, onCancel, ini
     <div className="bg-white rounded-[44px] border border-slate-200 shadow-2xl overflow-hidden animate-page-enter">
       <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50">
         <h3 className="font-black text-2xl text-slate-800 uppercase tracking-tight">
-          {initialData ? 'Edit Kontak Darurat' : 'Tambah Kontak Darurat'}
+          {initialData ? 'Edit Profil Pengurus' : 'Tambah Pengurus Baru'}
         </h3>
         <button onClick={onCancel} className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm text-slate-400">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -53,7 +53,8 @@ const EmergencyEditor: React.FC<EmergencyEditorProps> = ({ onSave, onCancel, ini
             <select 
               className="w-full bg-slate-900 text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-red-500 outline-none font-black appearance-none"
               value={provider}
-              onChange={(e) => setProvider(e.target.value)}
+              // Fix: Added explicit cast to any for e.target.value to resolve string assignment to state union type error
+              onChange={(e) => setProvider(e.target.value as any)}
             >
               <option value="Keamanan">Keamanan 👮</option>
               <option value="Kesehatan">Kesehatan 🚑</option>

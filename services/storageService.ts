@@ -1,6 +1,6 @@
 
-import { db } from './firebase.ts';
-import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export const STORAGE_KEYS = {
   NEWS: 'rt_pro_news',
@@ -23,73 +23,83 @@ export const STORAGE_KEYS = {
   JIMPITAN_STATUS: 'rt_pro_jimpitan_status',
   JIMPITAN_LOGS: 'rt_pro_jimpitan_logs',
   JIMPITAN_RESIDENTS: 'rt_pro_jimpitan_residents',
+  SOLIDARITAS_RESIDENTS: 'rt_pro_solidaritas_residents',
+  SOLIDARITAS_LOGS: 'rt_pro_solidaritas_logs',
+  SOLIDARITAS_SETTINGS: 'rt_pro_solidaritas_settings',
+  SOLIDARITAS_STATUS: 'rt_pro_solidaritas_status',
   GALLERY: 'rt_pro_gallery',
-  FINANCE: 'rt_pro_finance' // Kunci baru untuk konsistensi kas
+  FINANCE: 'rt_pro_finance'
 };
 
-export const storage = {
-  get: <T>(key: string, defaultValue: T): T => {
-    try {
-      const data = localStorage.getItem(key);
-      return data ? JSON.parse(data) : defaultValue;
-    } catch (e) {
-      return defaultValue;
+/**
+ * Fungsi untuk mengompres gambar base64
+ */
+export const compressImage = (base64Str: string, maxWidth: number = 800, quality: number = 0.6): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(base64Str);
+  });
+};
+
+const safeStringify = (data: any): string => {
+  const cache = new Set();
+  return JSON.stringify(data, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (cache.has(value)) return '[Circular]';
+      cache.add(value);
     }
+    return value;
+  });
+};
+
+/**
+ * Storage Service - Cloud Only Edition
+ * Menghapus ketergantungan pada localStorage browser.
+ */
+export const storage = {
+  // get sekarang hanya mengembalikan nilai default karena data asli akan ditarik via onSnapshot
+  get: <T>(key: string, defaultValue: T): T => {
+    return defaultValue;
   },
   
-  set: (key: string, value: any) => {
+  // set sekarang hanya mengirimkan data ke Firebase Firestore
+  set: async <T>(key: string, data: T): Promise<boolean> => {
     try {
-      // Firebase Firestore tidak mendukung nilai 'undefined'.
-      // Kita melakukan sanitasi dengan JSON.stringify & parse untuk menghapus key yang bernilai undefined.
-      const sanitizedValue = JSON.parse(JSON.stringify(value));
+      const stringifiedData = safeStringify(data);
+      const cleanData = JSON.parse(stringifiedData);
       
-      localStorage.setItem(key, JSON.stringify(sanitizedValue));
-      window.dispatchEvent(new Event('storage_updated'));
-      
-      // AUTO-SYNC SELURUH DATA KE FIREBASE
-      storage.saveToCloud(key, sanitizedValue);
-    } catch (e) {
-      if (e instanceof Error && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-        alert("Peringatan: Memori lokal penuh, data hanya akan tersimpan di Cloud.");
-      }
-      throw e;
-    }
-  },
-
-  saveToCloud: async (key: string, value: any) => {
-    try {
       await setDoc(doc(db, "app_data", key), { 
-        data: value,
-        updatedAt: new Date().toISOString()
+        data: cleanData, 
+        updatedAt: new Date().toISOString() 
       });
-      console.log(`[CloudSync] ${key} tersinkron.`);
-    } catch (err) {
-      console.error(`[CloudSync] Gagal sinkron ${key}:`, err);
+      
+      // Tetap trigger event untuk update UI lokal yang mendengarkan event ini
+      window.dispatchEvent(new Event('storage_updated'));
+      return true;
+    } catch (e) {
+      console.error("Cloud storage critical failure:", e);
+      return false;
     }
   },
 
-  loadFromCloud: async (key: string) => {
-    try {
-      const docRef = doc(db, "app_data", key);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const cloudData = docSnap.data().data;
-        localStorage.setItem(key, JSON.stringify(cloudData));
-        return cloudData;
-      }
-    } catch (err) {
-      console.error(`[CloudSync] Gagal memuat ${key}:`, err);
-    }
-    return null;
-  },
-
-  // Fungsi untuk menarik seluruh data dari Firebase (PENTING SAAT LOGIN)
-  syncAllFromCloud: async () => {
-    console.log("[CloudSync] Memulai sinkronisasi global...");
-    const keys = Object.values(STORAGE_KEYS);
-    const promises = keys.map(key => storage.loadFromCloud(key));
-    await Promise.all(promises);
+  // Fungsi updateLocal tidak lagi melakukan apa-apa ke browser storage
+  updateLocal: <T>(key: string, data: T) => {
+    // No-op untuk menjaga kompatibilitas dengan pemanggil lama
     window.dispatchEvent(new Event('storage_updated'));
-    console.log("[CloudSync] Sinkronisasi global selesai.");
   }
 };
