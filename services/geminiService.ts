@@ -1,26 +1,9 @@
 
 import { GoogleGenAI } from "@google/genai";
+import { safeStringify } from "./storageService.ts";
 
 const getAIClient = () => {
   return new GoogleGenAI({ apiKey: process.env.API_KEY });
-};
-
-/**
- * Helper untuk membersihkan data dari struktur sirkular sebelum ke Gemini
- */
-const safeStringify = (data: any) => {
-  try {
-    const cache = new Set();
-    return JSON.stringify(data, (key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (cache.has(value)) return;
-        cache.add(value);
-      }
-      return value;
-    });
-  } catch (e) {
-    return String(data);
-  }
 };
 
 export const generateNewsDraft = async (topic: string) => {
@@ -30,7 +13,8 @@ export const generateNewsDraft = async (topic: string) => {
     contents: `Buatkan draf pengumuman RT yang formal dan ramah tentang topik berikut: ${topic}. Format dalam bahasa Indonesia yang baik dan santun.`,
     config: {
       temperature: 0.7,
-      maxOutputTokens: 1000
+      maxOutputTokens: 1000,
+      thinkingConfig: { thinkingBudget: 0 }
     }
   });
   return response.text;
@@ -56,6 +40,7 @@ export const polishComplaint = async (description: string) => {
 
 export const analyzeFinancialData = async (transactions: any[]) => {
   const ai = getAIClient();
+  // Using robust stringify to prevent circular reference errors
   const cleanedData = safeStringify(transactions);
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',

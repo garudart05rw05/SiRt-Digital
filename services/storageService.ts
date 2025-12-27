@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   REPORTS: 'rt_pro_reports',
   SETTINGS: 'rt_pro_settings',
   OFFICIALS: 'rt_pro_officials',
+  YOUTH_OFFICIALS: 'rt_pro_youth_officials',
   COMMENTS: 'rt_pro_comments',
   GUESTBOOK: 'rt_pro_guestbook',
   COMPLAINTS: 'rt_pro_complaints',
@@ -28,12 +29,43 @@ export const STORAGE_KEYS = {
   SOLIDARITAS_SETTINGS: 'rt_pro_solidaritas_settings',
   SOLIDARITAS_STATUS: 'rt_pro_solidaritas_status',
   GALLERY: 'rt_pro_gallery',
-  FINANCE: 'rt_pro_finance'
+  FINANCE: 'rt_pro_finance',
+  YOUTH_MEMBERS: 'rt_pro_youth_members',
+  YOUTH_ARISAN_LOGS: 'rt_pro_youth_arisan_logs',
+  YOUTH_FINANCE: 'rt_pro_youth_finance',
+  YOUTH_SETTINGS: 'rt_pro_youth_settings'
 };
 
 /**
- * Fungsi untuk mengompres gambar base64
+ * Robust JSON serialization helper that handles circular references and complex system objects
  */
+export const safeStringify = (data: any): string => {
+  const cache = new WeakSet();
+  return JSON.stringify(data, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (cache.has(value)) {
+        return '[Circular]';
+      }
+      
+      // Detect and block heavy or problematic internal objects (Firestore snapshots, DOM elements, etc.)
+      const isInternal = 
+        value instanceof HTMLElement || 
+        value.constructor?.name === 'Sa' || 
+        value.constructor?.name?.startsWith('Q') || 
+        value.firestore || 
+        value._delegate ||
+        (value.id && value.ref && value.metadata); // Likely a Firestore DocumentSnapshot
+
+      if (isInternal) {
+        return '[Internal System Object]';
+      }
+
+      cache.add(value);
+    }
+    return value;
+  });
+};
+
 export const compressImage = (base64Str: string, maxWidth: number = 800, quality: number = 0.6): Promise<string> => {
   return new Promise((resolve) => {
     const img = new Image();
@@ -56,50 +88,42 @@ export const compressImage = (base64Str: string, maxWidth: number = 800, quality
   });
 };
 
-const safeStringify = (data: any): string => {
-  const cache = new Set();
-  return JSON.stringify(data, (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (cache.has(value)) return '[Circular]';
-      cache.add(value);
-    }
-    return value;
-  });
-};
-
-/**
- * Storage Service - Cloud Only Edition
- * Menghapus ketergantungan pada localStorage browser.
- */
 export const storage = {
-  // get sekarang hanya mengembalikan nilai default karena data asli akan ditarik via onSnapshot
   get: <T>(key: string, defaultValue: T): T => {
-    return defaultValue;
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
   },
   
-  // set sekarang hanya mengirimkan data ke Firebase Firestore
   set: async <T>(key: string, data: T): Promise<boolean> => {
     try {
       const stringifiedData = safeStringify(data);
       const cleanData = JSON.parse(stringifiedData);
       
+      localStorage.setItem(key, stringifiedData);
+
       await setDoc(doc(db, "app_data", key), { 
         data: cleanData, 
         updatedAt: new Date().toISOString() 
       });
       
-      // Tetap trigger event untuk update UI lokal yang mendengarkan event ini
       window.dispatchEvent(new Event('storage_updated'));
       return true;
     } catch (e) {
-      console.error("Cloud storage critical failure:", e);
+      console.error("System synchronization failure:", e);
       return false;
     }
   },
 
-  // Fungsi updateLocal tidak lagi melakukan apa-apa ke browser storage
   updateLocal: <T>(key: string, data: T) => {
-    // No-op untuk menjaga kompatibilitas dengan pemanggil lama
-    window.dispatchEvent(new Event('storage_updated'));
+    try {
+      localStorage.setItem(key, safeStringify(data));
+      window.dispatchEvent(new Event('storage_updated'));
+    } catch (e) {
+      console.error("Local storage update failure:", e);
+    }
   }
 };

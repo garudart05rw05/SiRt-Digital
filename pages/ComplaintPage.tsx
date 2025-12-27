@@ -133,15 +133,19 @@ const ComplaintPage: React.FC<{ role?: UserRole }> = ({ role = 'WARGA' }) => {
         </div>
       )}
 
-      {/* Lightbox Modal */}
+      {/* Lightbox Modal: Hanya bisa ditutup lewat tombol X */}
       {viewingPhoto && (
         <div 
-          className="fixed inset-0 z-[500] bg-slate-950/98 backdrop-blur-3xl flex items-center justify-center p-6 animate-page-enter cursor-zoom-out"
-          onClick={() => setViewingPhoto(null)}
+          className="fixed inset-0 z-[500] bg-slate-950/98 backdrop-blur-3xl flex items-center justify-center p-6 animate-page-enter"
         >
           <div className="relative max-w-4xl w-full flex flex-col items-center gap-6">
-            <button className="absolute -top-16 right-0 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white border border-white/10 active:scale-90 transition-all">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth={3}/></svg>
+            <button 
+              onClick={() => setViewingPhoto(null)}
+              className="absolute -top-16 right-0 w-12 h-12 bg-white/10 hover:bg-rose-500 rounded-full flex items-center justify-center text-white border border-white/10 active:scale-90 transition-all"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M6 18L18 6M6 6l12 12" strokeWidth={3}/>
+              </svg>
             </button>
             <img src={viewingPhoto} className="max-w-full max-h-[80vh] object-contain rounded-[40px] shadow-2xl border-4 border-white/5" alt="Detail Bukti" />
             <div className="bg-white/10 px-6 py-3 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] text-white">Pratinjau Bukti Foto</div>
@@ -320,7 +324,7 @@ const ComplaintPage: React.FC<{ role?: UserRole }> = ({ role = 'WARGA' }) => {
 
       <div className="bg-slate-900 p-10 rounded-[56px] text-center border border-white/5 space-y-4">
          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em] leading-relaxed">
-           Seluruh aduan yang masuk telah terenkripsi & tersinkronisasi ke Google Drive Pengurus secara otomatis.
+           Seluruh aduan yang masuk telah terenkripsi & tersinkronisasi ke Sistem dan Ketua RT secara otomatis.
          </p>
       </div>
     </div>

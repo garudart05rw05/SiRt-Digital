@@ -20,6 +20,11 @@ const LettersPage: React.FC<{ role: UserRole }> = ({ role }) => {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
 
+  const [form, setForm] = useState<Partial<LetterRequest>>({ 
+    privacyAgreed: false,
+    email: 'garudart05rw05@gmail.com' // Auto-fill Email Sistem
+  });
+
   const showToast = (message: string, type: ToastState['type'] = 'success') => {
     setToast({ show: true, message, type });
     if (type !== 'loading') setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
@@ -34,8 +39,6 @@ const LettersPage: React.FC<{ role: UserRole }> = ({ role }) => {
     });
     return () => { unsub(); unsubSettings(); };
   }, []);
-
-  const [form, setForm] = useState<Partial<LetterRequest>>({ privacyAgreed: false });
 
   const handleSubmit = async () => {
     if (!form.privacyAgreed || !form.email || !form.name || !form.purpose) {
@@ -59,11 +62,10 @@ const LettersPage: React.FC<{ role: UserRole }> = ({ role }) => {
     const saved = await storage.set(STORAGE_KEYS.LETTERS, updatedList);
     
     if (saved) {
-      // KIRIM EMAIL PAKAI SERVICE TERPUSAT (EMAILJS / GAS)
       await notificationService.sendEmail(settings, payload, 'letter');
       showToast("Berhasil! Cek Email Berkala", "success");
       setShowRequestModal(false);
-      setForm({ privacyAgreed: false });
+      setForm({ privacyAgreed: false, email: 'garudart05rw05@gmail.com' });
     }
     setIsSubmitting(false);
   };
@@ -77,7 +79,6 @@ const LettersPage: React.FC<{ role: UserRole }> = ({ role }) => {
     const updatedList = requests.map(r => r.id === id ? updatedReq : r);
     const saved = await storage.set(STORAGE_KEYS.LETTERS, updatedList);
     if (saved) {
-      // KIRIM UPDATE STATUS VIA EMAIL
       await notificationService.sendEmail(settings, updatedReq, 'letter');
       showToast("Status & Email Berhasil Dikirim", "success");
     }
@@ -134,17 +135,33 @@ const LettersPage: React.FC<{ role: UserRole }> = ({ role }) => {
           <div className="bg-white w-full max-w-2xl rounded-[56px] shadow-2xl animate-page-enter flex flex-col max-h-[90vh] overflow-hidden">
             <div className="p-10 border-b border-slate-50 flex justify-between items-center">
                <h3 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Form Pengajuan</h3>
-               <button onClick={() => setShowRequestModal(false)} className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400">X</button>
+               <button onClick={() => setShowRequestModal(false)} className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 shadow-sm transition-all hover:bg-rose-500 hover:text-white">✕</button>
             </div>
-            <div className="p-10 space-y-6 overflow-y-auto">
-              <input type="email" className="w-full bg-slate-900 text-white rounded-3xl px-7 py-5 outline-none font-black text-sm" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} placeholder="Email (Wajib)" />
-              <input type="text" className="w-full bg-slate-900 text-white rounded-3xl px-7 py-5 outline-none font-black text-sm" value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" />
-              <textarea rows={4} className="w-full bg-slate-900 text-white rounded-[32px] px-7 py-6 outline-none font-bold text-sm" value={form.purpose || ''} onChange={e => setForm({...form, purpose: e.target.value})} placeholder="Keperluan Surat" />
-              <div className="flex items-start gap-4 p-4 bg-indigo-50 rounded-3xl">
-                 <input type="checkbox" className="mt-1" checked={form.privacyAgreed} onChange={e => setForm({...form, privacyAgreed: e.target.checked})} />
-                 <p className="text-[10px] text-slate-500 font-bold">Data yang saya isi benar adanya.</p>
+            <div className="p-10 space-y-6 overflow-y-auto no-scrollbar">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Email Pengirim (Auto-fill)</label>
+                <div className="relative">
+                  <input type="email" className="w-full bg-slate-900 text-indigo-400 rounded-3xl px-7 py-5 outline-none font-black text-sm shadow-inner" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} placeholder="Email (Wajib)" />
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 bg-indigo-500/10 px-2 py-1 rounded-lg">
+                    <span className="text-[7px] font-black text-indigo-500 uppercase">Default</span>
+                  </div>
+                </div>
               </div>
-              <button onClick={handleSubmit} disabled={isSubmitting} className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black uppercase text-xs shadow-xl">{isSubmitting ? 'Mengirim...' : 'Kirim Pengajuan'}</button>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Nama Lengkap Pemohon</label>
+                <input type="text" className="w-full bg-slate-900 text-white rounded-3xl px-7 py-5 outline-none font-black text-sm shadow-inner" value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} placeholder="Masukkan nama..." />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-3">Keperluan Surat Pengantar</label>
+                <textarea rows={4} className="w-full bg-slate-900 text-white rounded-[32px] px-7 py-6 outline-none font-bold text-sm shadow-inner resize-none" value={form.purpose || ''} onChange={e => setForm({...form, purpose: e.target.value})} placeholder="Jelaskan tujuan pengajuan surat..." />
+              </div>
+              <div className="flex items-start gap-4 p-5 bg-indigo-50 rounded-[32px] border border-indigo-100 shadow-inner">
+                 <input type="checkbox" className="mt-1 w-5 h-5 rounded-lg border-indigo-200" checked={form.privacyAgreed} onChange={e => setForm({...form, privacyAgreed: e.target.checked})} />
+                 <p className="text-[10px] text-slate-500 font-bold leading-relaxed">Saya menyatakan bahwa data yang diisi benar adanya dan akan digunakan secara bertanggung jawab sesuai hukum yang berlaku.</p>
+              </div>
+              <button onClick={handleSubmit} disabled={isSubmitting} className="w-full bg-indigo-600 text-white py-6 rounded-[32px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl active:scale-95 transition-all disabled:opacity-30">
+                {isSubmitting ? 'MENYINKRONKAN...' : 'KIRIM PENGAJUAN DIGITAL'}
+              </button>
             </div>
           </div>
         </div>

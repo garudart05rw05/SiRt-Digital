@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Page, UserRole, AppSettings } from '../types';
 import { storage, STORAGE_KEYS } from '../services/storageService.ts';
 import { db } from '../services/firebase.ts';
@@ -17,13 +17,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onPageChange, rol
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [notifs, setNotifs] = useState<Record<string, boolean>>({});
   const [settings, setSettings] = useState<AppSettings>(() => storage.get<AppSettings>(STORAGE_KEYS.SETTINGS, {}));
+  const mainRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const handleStatus = () => setIsOnline(navigator.onLine);
     window.addEventListener('online', handleStatus);
     window.addEventListener('offline', handleStatus);
     
-    // Sinkronkan settings untuk running text
     const unsubSettings = onSnapshot(doc(db, "app_data", STORAGE_KEYS.SETTINGS), (docSnap) => {
       if (docSnap.exists()) {
         setSettings(docSnap.data().data);
@@ -36,6 +36,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onPageChange, rol
       unsubSettings();
     };
   }, []);
+
+  // AUTO-SCROLL TO TOP ON PAGE CHANGE
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [activePage]);
 
   const getStorageKeyForPage = (page: Page | string): string | null => {
     const map: Record<string, string> = {
@@ -122,9 +129,9 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onPageChange, rol
             <div className="flex flex-col">
               <h1 className="text-[11px] font-black text-slate-800 uppercase tracking-widest leading-none">Digital Pro</h1>
               <div className="flex items-center gap-1.5 mt-1">
-                <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
+                <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-50 animate-pulse' : 'bg-rose-500'}`}></div>
                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
-                  {role} • {isOnline ? 'Online' : 'Offline Mode'}
+                  {role} • {isOnline ? 'Sistem Aktif' : 'Mode Offline'}
                 </span>
               </div>
             </div>
@@ -132,16 +139,15 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onPageChange, rol
 
           <button 
             onClick={onLogout}
-            className="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-2xl transition-all active:scale-95 group"
+            className="flex items-center gap-2 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 px-4 py-2 rounded-2xl transition-all active:scale-95 group"
           >
-            <span className="text-[9px] font-black uppercase tracking-widest">Logout</span>
+            <span className="text-[9px] font-black uppercase tracking-widest">Selesai</span>
             <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
           </button>
         </div>
 
-        {/* RUNNING TEXT (MARQUEE) */}
         {settings.marqueeEnabled && settings.marqueeText && (
           <div className="bg-indigo-50 border-t border-indigo-100 py-2.5 px-4 flex items-center gap-3 overflow-hidden">
              <div className="shrink-0 bg-indigo-600 text-white p-1 rounded-md shadow-sm z-10">
@@ -156,7 +162,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activePage, onPageChange, rol
         )}
       </header>
 
-      <main className="flex-1 overflow-y-auto page-enter pb-32 no-scrollbar">
+      <main ref={mainRef} className="flex-1 overflow-y-auto page-enter pb-32 no-scrollbar">
         {children}
       </main>
 

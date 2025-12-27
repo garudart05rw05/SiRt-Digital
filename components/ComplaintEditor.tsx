@@ -12,7 +12,7 @@ interface ComplaintEditorProps {
 const ComplaintEditor: React.FC<ComplaintEditorProps> = ({ onSave, onCancel }) => {
   const [formData, setFormData] = useState<Partial<Complaint>>({
     residentName: '',
-    email: '',
+    email: 'garudart05rw05@gmail.com', // Auto-fill Email Sistem
     phone: '',
     category: 'Infrastruktur',
     subject: '',
@@ -45,7 +45,6 @@ const ComplaintEditor: React.FC<ComplaintEditorProps> = ({ onSave, onCancel }) =
       const reader = new FileReader();
       reader.onloadend = async () => {
         const result = reader.result as string;
-        // Langsung kompresi di sini
         const optimized = await compressImage(result, 800, 0.6);
         setPreviewImage(optimized);
         setFormData(prev => ({ ...prev, imageUrl: optimized }));
@@ -70,14 +69,20 @@ const ComplaintEditor: React.FC<ComplaintEditorProps> = ({ onSave, onCancel }) =
       <div className="p-10 space-y-8 overflow-y-auto max-h-[70vh] no-scrollbar">
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Email Aktif (Wajib untuk Update)</label>
-            <input 
-              type="email" 
-              className="w-full bg-slate-900 text-white rounded-2xl px-6 py-4 focus:ring-2 focus:ring-rose-500 outline-none font-bold"
-              placeholder="nama@email.com"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-            />
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Email Pelapor (Otomatis Terisi)</label>
+            <div className="relative">
+              <input 
+                type="email" 
+                className="w-full bg-slate-900 text-indigo-400 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-rose-500 outline-none font-black shadow-inner"
+                placeholder="nama@email.com"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+              />
+              <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-indigo-500/10 px-2 py-1 rounded-lg">
+                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse"></div>
+                <span className="text-[7px] font-black text-indigo-400 uppercase">System Sync</span>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

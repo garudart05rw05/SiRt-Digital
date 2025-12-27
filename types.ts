@@ -23,10 +23,13 @@ export enum Page {
   ADMIN_PANEL = 'ADMIN_PANEL',
   NEWS = 'NEWS',
   RESIDENTS = 'RESIDENTS',
-  MAP = 'MAP'
+  MAP = 'MAP',
+  YOUTH_FUND = 'YOUTH_FUND',
+  YOUTH_OFFICIALS = 'YOUTH_OFFICIALS',
+  PUBLIC_GUEST = 'PUBLIC_GUEST'
 }
 
-export type UserRole = 'ADMIN' | 'WARGA';
+export type UserRole = 'ADMIN' | 'WARGA' | 'GUEST';
 
 export interface AppSettings {
   motto?: string;
@@ -50,6 +53,8 @@ export interface AppSettings {
   popupTitle?: string;
   popupText?: string;
   popupImageUrl?: string;
+  popupImageUrls?: string[];
+  popupAutoScroll?: boolean;
   chairmanName?: string;
   treasurerName?: string;
   adminPassword?: string;
@@ -62,15 +67,46 @@ export interface AppSettings {
   bhabinkamtibmasPhone?: string;
   marqueeText?: string;
   marqueeEnabled?: boolean;
-  // EMAIL JS CONFIG UMUM (Aduan & Tamu)
-  emailJsServiceId?: string;
-  emailJsPublicKey?: string;
-  emailJsTemplateComplaintId?: string;
-  emailJsTemplateGuestId?: string;
-  // EMAIL JS CONFIG KHUSUS SURAT
-  emailJsLetterServiceId?: string;
-  emailJsLetterPublicKey?: string;
-  emailJsTemplateLetterId?: string;
+  // QR Code Settings
+  qrCodeEnabled?: boolean;
+  qrCodeImageUrl?: string;
+  qrCodeTitle?: string;
+  // EmailJS Account A (Internal: Jimpitan & Aduan)
+  ejs_internal_service?: string;
+  ejs_internal_public?: string;
+  ejs_jimpitan_template?: string;
+  ejs_complaint_template?: string;
+  // EmailJS Account B (Layanan: Guestbook & Letters)
+  ejs_guest_service?: string;
+  ejs_guest_public?: string;
+  ejs_guest_template?: string;
+  ejs_letter_template?: string;
+}
+
+export interface YouthMember {
+  id: string;
+  name: string;
+  phone?: string;
+  address?: string;
+}
+
+export interface YouthFinanceTx {
+  id: string;
+  code: string;
+  type: 'IN' | 'OUT';
+  amount: number;
+  description: string;
+  date: string;
+  evidenceUrl?: string;
+}
+
+export interface YouthArisanLog {
+  id: string;
+  date: string;
+  period: string; // YYYY-MM
+  amountPerPerson: number;
+  paidMemberIds: string[];
+  totalCollected: number;
 }
 
 export interface NewsItem {
@@ -137,7 +173,7 @@ export interface Complaint {
 export interface GalleryItem {
   id: string;
   title: string;
-  imageUrl: string;
+  imageUrls: string[];
   category: string;
   date: string;
 }
@@ -318,6 +354,7 @@ export interface JimpitanLog {
   autoPaidResidentIds: string[];
   unpaidResidentIds?: string[];
   totalCashReceived: number;
+  recipientEmail?: string;
 }
 
 export interface StatData {
@@ -337,16 +374,16 @@ export const MASTER_SERVICES = [
   { id: Page.GALLERY, label: 'Galeri Foto', icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16', color: 'bg-purple-600', category: 'Informasi' },
   { id: Page.SOCIAL_MEDIA, label: 'Media Sosial', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: 'bg-pink-600', category: 'Informasi' },
   { id: Page.MAP, label: 'Peta Wilayah', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z', color: 'bg-sky-600', category: 'Informasi' },
+  { id: Page.YOUTH_FUND, label: 'Kas Karang Taruna', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2', color: 'bg-violet-600', category: 'Keuangan' },
   { id: Page.FINANCE, label: 'Kas RT', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2', color: 'bg-emerald-600', category: 'Keuangan' },
   { id: Page.SOLIDARITAS, label: 'Solidaritas', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: 'bg-rose-600', category: 'Keuangan' },
   { id: Page.JIMPITAN, label: 'Jimpitan', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2', color: 'bg-indigo-800', category: 'Keuangan' },
-  { id: Page.RESIDENTS, label: 'Data Warga', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197', color: 'bg-blue-600', category: 'Administrasi', adminOnly: true },
   { id: Page.LETTERS, label: 'Surat Pengantar', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 -2v10a2 2 0 002 2z', color: 'bg-indigo-700', category: 'Administrasi' },
   { id: Page.ARCHIVE, label: 'Arsip Digital', icon: 'M5 8h14M5 8a2 2 110-4h14a2 2 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4', color: 'bg-[#0077b6]', category: 'Administrasi' },
   { id: Page.INVENTORY, label: 'Inventaris', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4', color: 'bg-teal-700', category: 'Administrasi' },
   { id: Page.MINUTES, label: 'Notulen Rapat', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', color: 'bg-blue-800', category: 'Administrasi' },
   { id: Page.POLLS, label: 'Polling', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', color: 'bg-purple-700', category: 'Administrasi' },
-  { id: Page.OFFICIALS, label: 'Pengurus', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: 'bg-indigo-600', category: 'Administrasi' },
+  { id: Page.OFFICIALS, label: 'Pengurus RT', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: 'bg-indigo-600', category: 'Administrasi' },
+  { id: Page.YOUTH_OFFICIALS, label: 'Pengurus Karang Taruna', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', color: 'bg-violet-500', category: 'Administrasi' },
   { id: Page.STATISTICS, label: 'Statistik', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z', color: 'bg-indigo-500', category: 'Administrasi' },
-  { id: Page.CLOUD_SETTINGS, label: 'Cloud Sync', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', color: 'bg-indigo-600', category: 'Administrasi', adminOnly: true },
 ];

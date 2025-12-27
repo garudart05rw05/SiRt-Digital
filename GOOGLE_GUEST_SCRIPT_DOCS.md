@@ -1,115 +1,187 @@
-# Kode Google Apps Script (GAS) - Buku Tamu Pro (Final Version)
+# 📜 Panduan Template EmailJS - Buku Tamu Digital Pro (Ultra Detail)
 
-Gunakan kode di bawah ini pada proyek Google Apps Script Anda. Kode ini menangani 3 status sekaligus: **Pending (Proses)**, **ACC (Diizinkan)**, dan **Tolak** berdasarkan data yang dikirim dari aplikasi.
+Salin kode HTML di bawah ini ke bagian **HTML Source** pada dashboard EmailJS Anda untuk menghasilkan laporan tamu yang sangat detail dan profesional.
 
-### KODE UNTUK DEPLOY (Universal Script)
+### 🛠️ Cara Pemasangan:
+1. Masuk ke **EmailJS Dashboard**.
+2. Buat **New Template** atau edit template yang sudah ada.
+3. Klik tab **Settings** dan aktifkan mode **HTML Source** (ikon `<>`).
+4. Hapus semua kode lama dan tempelkan kode di bawah ini.
 
-```javascript
-/**
- * Sistem Notifikasi Email Buku Tamu RT Digital Pro
- * Mendukung: Notifikasi Tamu, Update Status (ACC/Tolak), dan CC Pengurus.
- */
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tiket Registrasi Tamu</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+      <td align="center" style="padding: 20px 0;">
+        <table width="600" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+          
+          <!--  HEADER: IDENTITAS RT -->
+          <tr>
+            <td style="background-color: #f59e0b; padding: 45px 40px 35px 40px; text-align: center;">
+              <div style="background-color: rgba(255,255,255,0.2); width: 70px; height: 70px; border-radius: 20px; margin: 0 auto 20px auto; display: block; line-height: 70px;">
+                <img src="https://cdn-icons-png.flaticon.com/512/6009/6009043.png" width="45" height="45" style="margin-top: 12px;">
+              </div>
+              <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Buku Tamu Digital 📜</h1>
+              <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">RT 05 RW 05 Gayam - Mojoroto</p>
+            </td>
+          </tr>
 
-function doPost(e) {
-  // Mencegah race condition saat banyak data masuk bersamaan
-  var lock = LockService.getScriptLock();
-  lock.tryLock(10000); 
-  
-  try {
-    // 1. Parsing Data dari Aplikasi
-    var data = JSON.parse(e.postData.contents);
-    var recipient = data.email;
-    
-    // 2. Daftar CC: Ketua RT, Sekretaris, dan Keamanan
-    var ccList = [data.chairmanEmail, data.secretaryEmail, data.securityEmail].filter(Boolean).join(',');
+          <!-- STATUS BADGE -->
+          <tr>
+            <td style="padding: 35px 40px 10px 40px; text-align: center;">
+              <div style="display: inline-block; padding: 12px 30px; border-radius: 50px; background-color: #fffbeb; border: 2px solid #fef3c7; color: #b45309; font-size: 14px; font-weight: 800; text-transform: uppercase;">
+                🔔 STATUS: {{status}}
+              </div>
+            </td>
+          </tr>
 
-    // 3. Logika Judul dan Pesan berdasarkan Status
-    var subjectPrefix = "";
-    var statusBadge = "";
-    var instructions = "";
+          <!-- TICKET ID CARD -->
+          <tr>
+            <td style="padding: 10px 40px;">
+              <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 24px; padding: 30px; text-align: center;">
+                <p style="margin: 0; color: #94a3b8; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px;">🎫 Nomor Registrasi Unik</p>
+                <h2 style="margin: 12px 0; color: #1e293b; font-size: 38px; font-weight: 900; letter-spacing: -1px; font-family: 'Courier New', monospace;">{{id}}</h2>
+                <p style="margin: 0; color: #64748b; font-size: 12px; font-weight: 500;">Simpan kode ini untuk verifikasi petugas gerbang / keamanan.</p>
+              </div>
+            </td>
+          </tr>
 
-    if (data.status === 'Proses') {
-      subjectPrefix = "⏳ [Review] Registrasi Tamu";
-      statusBadge = "MENUNGGU PERSETUJUAN (PENDING)";
-      instructions = "Data Anda telah masuk ke sistem. Mohon tunggu sejenak, Pengurus RT sedang meninjau permohonan kunjungan Anda. Update status resmi akan dikirimkan kembali melalui email ini.";
-    } else if (data.status === 'Diizinkan') {
-      subjectPrefix = "✅ [DIIZINKAN] Tiket Kunjungan";
-      statusBadge = "DIIZINKAN (ACC) / TERVERIFIKASI";
-      instructions = "Kabar baik! Kunjungan Anda telah DISETUJUI oleh Ketua RT. Harap tunjukkan email ini kepada petugas keamanan atau warga yang dikunjungi saat tiba di lokasi.";
-    } else {
-      subjectPrefix = "❌ [DITOLAK] Permohonan Kunjungan";
-      statusBadge = "DITOLAK / TIDAK DIIZINKAN";
-      instructions = "Mohon maaf, permohonan kunjungan Anda saat ini belum dapat kami setujui karena alasan keamanan atau kebijakan lingkungan.";
-    }
+          <!-- SECTION I: DETAIL KUNJUNGAN -->
+          <tr>
+            <td style="padding: 30px 40px 10px 40px;">
+              <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 15px; font-weight: 800; text-transform: uppercase; border-left: 5px solid #f59e0b; padding-left: 15px;">📍 I. Rincian Kunjungan</h3>
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #fdfaf3; border-radius: 20px; padding: 20px;">
+                <tr>
+                  <td width="50%" style="padding-bottom: 20px;">
+                    <p style="margin: 0; color: #92400e; font-size: 10px; font-weight: 800; text-transform: uppercase;">🏠 Warga Yang Dikunjungi</p>
+                    <p style="margin: 5px 0 0 0; color: #1e293b; font-size: 15px; font-weight: 700;">{{hostName}}</p>
+                  </td>
+                  <td width="50%" style="padding-bottom: 20px;">
+                    <p style="margin: 0; color: #92400e; font-size: 10px; font-weight: 800; text-transform: uppercase;">📝 Keperluan</p>
+                    <p style="margin: 5px 0 0 0; color: #1e293b; font-size: 15px; font-weight: 700;">{{purpose}}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td width="50%">
+                    <p style="margin: 0; color: #92400e; font-size: 10px; font-weight: 800; text-transform: uppercase;">📅 Waktu Datang</p>
+                    <p style="margin: 5px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700;">{{startDate}} | ⏰ {{startTime}} WIB</p>
+                  </td>
+                  <td width="50%">
+                    <p style="margin: 0; color: #92400e; font-size: 10px; font-weight: 800; text-transform: uppercase;">⏳ Durasi Rencana</p>
+                    <p style="margin: 5px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700;">{{duration}} ({{visitDays}} Hari)</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-    // 4. Memformat Alamat Detail
-    var addr = data.address;
-    var fullAddress = (data.addressType === 'Kota' ? 'Kel. ' : 'Desa ') + addr.kelDesa + 
-                      ", RT " + addr.rt + "/RW " + addr.rw + 
-                      ", Kec. " + addr.kec + ", " + addr.cityRegency;
+          <!-- SECTION II: IDENTITAS TAMU -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 15px; font-weight: 800; text-transform: uppercase; border-left: 5px solid #f59e0b; padding-left: 15px;">👤 II. Identitas Lengkap Tamu</h3>
+              <div style="background-color: #f1f5f9; border-radius: 20px; padding: 25px;">
+                <table width="100%" border="0" cellspacing="0" cellpadding="8">
+                  <tr>
+                    <td width="40%" style="color: #64748b; font-size: 12px; font-weight: 700;">👤 NAMA LENGKAP</td>
+                    <td width="60%" style="color: #1e293b; font-size: 14px; font-weight: 800; text-transform: uppercase;">{{name}}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #64748b; font-size: 12px; font-weight: 700;">🪪 JENIS & NO. ID</td>
+                    <td style="color: #1e293b; font-size: 14px; font-weight: 700;">{{idType}} - {{idNumber}}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #64748b; font-size: 12px; font-weight: 700;">📱 NO. WHATSAPP</td>
+                    <td style="color: #1e293b; font-size: 14px; font-weight: 700;">{{phone}}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #64748b; font-size: 12px; font-weight: 700;">🏢 INSTANSI/LEMBAGA</td>
+                    <td style="color: #1e293b; font-size: 14px; font-weight: 700;">{{institution}}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #64748b; font-size: 12px; font-weight: 700;">👥 TOTAL ROMBONGAN</td>
+                    <td style="color: #1e293b; font-size: 14px; font-weight: 800;">{{guestCount}} Orang</td>
+                  </tr>
+                </table>
+              </div>
+            </td>
+          </tr>
 
-    // 5. Menyusun Subjek dan Isi Email
-    var subject = subjectPrefix + " RT 05 - ID: " + data.id;
-    
-    var body = "FORMULIR REGISTRASI TAMU DIGITAL RT 05 RW 05 GAYAM\n" +
-               "==================================================\n\n" +
-               "STATUS SAAT INI : " + statusBadge + "\n" +
-               "NOMOR KODE UNIK : " + data.id + "\n\n" +
-               "PESAN PENGURUS:\n" + instructions + "\n\n" +
-               "--------------------------------------------------\n" +
-               "I. IDENTITAS TAMU\n" +
-               "- Nama Lengkap : " + data.name + "\n" +
-               "- Jenis ID      : " + data.idType + " (" + data.idNumber + ")\n" +
-               "- No. HP / WA  : " + data.phone + "\n" +
-               "- Jumlah Tamu  : " + data.guestCount + " Orang\n" +
-               "- Instansi     : " + (data.institution || "-") + "\n\n" +
-               "II. ALAMAT ASAL TAMU\n" +
-               "- Domisili     : " + data.addressType + "\n" +
-               "- Alamat       : " + fullAddress + "\n\n" +
-               "III. DETAIL KUNJUNGAN\n" +
-               "- Warga Tujuan : " + data.hostName + "\n" +
-               "- Keperluan    : " + data.purpose + "\n" +
-               "- Tgl. Mulai   : " + data.startDate + "\n" +
-               "- Jam Datang   : " + data.startTime + " WIB\n" +
-               "- Durasi       : " + data.duration + " (" + data.visitDays + " Hari)\n\n" +
-               "IV. INFORMASI KENDARAAN\n" +
-               "- Jenis        : " + data.vehicleType + "\n" +
-               "- No. Plat      : " + data.vehiclePlate.toUpperCase() + "\n" +
-               "- Merek/Warna  : " + data.vehicleBrand + " / " + data.vehicleColor + "\n\n" +
-               "--------------------------------------------------\n\n" +
-               "Catatan: Laporan ini dihasilkan secara otomatis oleh sistem digital.\n" +
-               "Tembusan (CC) telah dikirimkan ke email Pengurus RT terkait.\n\n" +
-               "Hormat Kami,\n" +
-               "Administrasi RT 05 RW 05 Gayam\n" +
-               "Kel. Gayam, Kec. Mojoroto, Kota Kediri";
+          <!-- SECTION III: DATA KENDARAAN -->
+          <tr>
+            <td style="padding: 20px 40px;">
+              <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 15px; font-weight: 800; text-transform: uppercase; border-left: 5px solid #f59e0b; padding-left: 15px;">🚗 III. Data Kendaraan</h3>
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td width="33%" align="center" style="padding: 15px; background-color: #f8fafc; border-radius: 15px; border: 1px solid #f1f5f9;">
+                    <p style="margin: 0; color: #94a3b8; font-size: 9px; font-weight: 800;">🔢 PLAT NOMOR</p>
+                    <p style="margin: 5px 0 0 0; color: #1e293b; font-size: 16px; font-weight: 900; text-transform: uppercase;">{{vehiclePlate}}</p>
+                  </td>
+                  <td width="2%">&nbsp;</td>
+                  <td width="32%" align="center" style="padding: 15px; background-color: #f8fafc; border-radius: 15px; border: 1px solid #f1f5f9;">
+                    <p style="margin: 0; color: #94a3b8; font-size: 9px; font-weight: 800;">🏎️ MEREK/TIPE</p>
+                    <p style="margin: 5px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700; text-transform: uppercase;">{{vehicleBrand}}</p>
+                  </td>
+                  <td width="2%">&nbsp;</td>
+                  <td width="31%" align="center" style="padding: 15px; background-color: #f8fafc; border-radius: 15px; border: 1px solid #f1f5f9;">
+                    <p style="margin: 0; color: #94a3b8; font-size: 9px; font-weight: 800;">🎨 JENIS/WARNA</p>
+                    <p style="margin: 5px 0 0 0; color: #1e293b; font-size: 14px; font-weight: 700;">{{vehicleType}} ({{vehicleColor}})</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-    // 6. Pengiriman Email Utama dengan CC
-    MailApp.sendEmail({
-      to: recipient,
-      cc: ccList,
-      subject: subject,
-      body: body
-    });
+          <!-- SECTION IV: TANDA TANGAN -->
+          <tr>
+            <td style="padding: 20px 40px;">
+               <div style="text-align: center; border-top: 1px dashed #e2e8f0; padding-top: 25px;">
+                  <p style="margin: 0 0 15px 0; color: #94a3b8; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">✍️ Tanda Tangan Elektronik</p>
+                  <div style="display: inline-block; padding: 10px; border: 1px solid #f1f5f9; border-radius: 15px;">
+                    <img src="{{signature}}" width="220" style="max-height: 100px; display: block; filter: contrast(1.2);">
+                  </div>
+                  <p style="margin: 15px 0 0 0; color: #cbd5e1; font-size: 10px; font-weight: 600;">Diregistrasi pada: {{request_time}} WIB</p>
+               </div>
+            </td>
+          </tr>
 
-    return ContentService.createTextOutput("Success").setMimeType(ContentService.MimeType.TEXT);
-    
-  } catch (err) {
-    return ContentService.createTextOutput("Error: " + err.toString()).setMimeType(ContentService.MimeType.TEXT);
-  } finally {
-    lock.releaseLock();
-  }
-}
+          <!-- FOOTER -->
+          <tr>
+            <td style="background-color: #1e293b; padding: 35px 40px; text-align: center;">
+              <p style="margin: 0; color: #ffffff; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">🛡️ SiRT Digital Pro System</p>
+              <p style="margin: 12px 0 0 0; color: #64748b; font-size: 11px; line-height: 1.6;">
+                Dokumen ini merupakan catatan resmi sistem informasi RT 05 RW 05 Gayam Kediri. Tembusan otomatis telah dikirimkan ke email Pengurus RT dan Seksi Keamanan.
+              </p>
+              <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px;">
+                <a href="https://garudart05.web.app" style="background-color: #f59e0b; color: #ffffff; padding: 12px 25px; border-radius: 12px; text-decoration: none; font-size: 12px; font-weight: 800; text-transform: uppercase;">🌐 Buka Portal Warga</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
 ```
 
-### PETUNJUK PENGGUNAAN:
-1. Copy seluruh kode di atas.
-2. Buka [script.google.com](https://script.google.com).
-3. Buat proyek baru dan paste kodenya.
-4. Klik **Deploy** -> **New Deployment**.
-5. Pilih **Web App**, set **Execute as: Me** dan **Who has access: Anyone**.
-6. Salin URL yang dihasilkan.
-7. Masukkan URL tersebut ke file `pages/GuestbookPage.tsx` pada variabel:
-   - `URL_GUEST_PENDING`
-   - `URL_GUEST_APPROVED`
-   - `URL_GUEST_REJECTED`
-   *(Anda bisa menggunakan satu URL yang sama untuk ketiganya karena script ini bersifat universal).*
+### 📋 Daftar Variabel Penting:
+EmailJS akan mengisi otomatis data di dalam `{{ }}` jika dikirim dari aplikasi:
+- `{{id}}`: Kode tamu (Contoh: T-12345).
+- `{{status}}`: Status pendaftaran (Proses/Diizinkan).
+- `{{name}}`: Nama lengkap tamu.
+- `{{idType}}` & `{{idNumber}}`: KTP/SIM & Nomornya.
+- `{{phone}}`: No. WhatsApp tamu.
+- `{{hostName}}`: Nama warga yang dituju.
+- `{{purpose}}`: Tujuan kunjungan.
+- `{{startDate}}` & `{{startTime}}`: Tanggal & Jam kedatangan.
+- `{{duration}}`: Lama berkunjung.
+- `{{vehiclePlate}}`, `{{vehicleBrand}}`, `{{vehicleType}}`: Data kendaraan.
+- `{{signature}}`: Gambar tanda tangan (Base64).
+- `{{request_time}}`: Waktu sistem mencatat data.
