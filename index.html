@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -11,12 +12,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SiRT Digital">
     
-    <!-- Icons & Favicon -->
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/6009/6009043.png">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/6009/6009043.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="https://cdn-icons-png.flaticon.com/512/6009/6009043.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://cdn-icons-png.flaticon.com/512/6009/6009043.png">
-    <link rel="apple-touch-icon" sizes="167x167" href="https://cdn-icons-png.flaticon.com/512/6009/6009043.png">
+    <!-- Icons & Favicon (Updated to professional House icon matching SiRT brand) -->
+    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/512/home-address.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/home-address.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://img.icons8.com/fluency/512/home-address.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/512/home-address.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="https://img.icons8.com/fluency/512/home-address.png">
     
     <link rel="manifest" href="manifest.json">
 
@@ -39,49 +40,8 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Wave Animation for Dashboard Hand */
-        @keyframes wave {
-          0% { transform: rotate( 0.0deg) }
-          10% { transform: rotate(14.0deg) }
-          20% { transform: rotate(-8.0deg) }
-          30% { transform: rotate(14.0deg) }
-          40% { transform: rotate(-4.0deg) }
-          50% { transform: rotate(10.0deg) }
-          60% { transform: rotate( 0.0deg) }
-          100% { transform: rotate( 0.0deg) }
-        }
-        .animate-wave {
-          animation: wave 2.5s infinite;
-          transform-origin: 70% 70%;
-          display: inline-block;
-        }
-        
-        /* Signal Wave Animation */
-        @keyframes signal-wave {
-          0% { transform: scale(1); opacity: 0.6; }
-          100% { transform: scale(2.5); opacity: 0; }
-        }
-        .animate-signal {
-          animation: signal-wave 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-        }
-
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .marquee-container {
-            overflow: hidden;
-            white-space: nowrap;
-            width: 100%;
-        }
-        .marquee-content {
-            display: inline-block;
-            padding-left: 100%;
-            animation: marquee 25s linear infinite;
-        }
-        @keyframes marquee {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-100%, 0); }
-        }
 
         @media (max-width: 640px) {
             .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
@@ -96,32 +56,7 @@
                 padding: 0 !important;
                 margin: 0 !important;
             }
-            main {
-                padding-bottom: 0 !important;
-            }
-            .animate-page-enter {
-                animation: none !important;
-            }
-            .shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl {
-                shadow: none !important;
-                border: 1px solid #e2e8f0 !important;
-            }
-            .bg-slate-900, .bg-indigo-700, .bg-blue-800, .bg-emerald-600 {
-                background-color: #f1f5f9 !important;
-                color: black !important;
-            }
-            .text-white {
-                color: black !important;
-            }
-            .print-header {
-                display: block !important;
-                text-align: center;
-                margin-bottom: 30px;
-                border-bottom: 3px double #333;
-                padding-bottom: 10px;
-            }
         }
-        .print-header { display: none; }
     </style>
 <script type="importmap">
 {
